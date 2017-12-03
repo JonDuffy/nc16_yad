@@ -3,6 +3,7 @@ import re
 import os
 import sys
 import PIL.Image
+import argparse
 
 
 classes_dict = {"aeroplane":0, "bicycle":1, "bird":2, "boat":3, "bottle":4, "bus":5, "car":6, "cat":7, "chair":8, "cow":9, "diningtable":10, "dog":11, "horse":12, "motorbike":13, "person":14, "pottedplant":15, "sheep":16, "sofa":17, "train":18, "tvmonitor":19}
@@ -43,6 +44,8 @@ def convert_annotation(image_id):
                 if len(item) is not 1:
                     nums.append(int(re.sub("[\s+]", "", item)))
 
+            '''X_1 top left 
+            '''
 
             y_1 = nums[0] // 400
             y_2 = nums[len(nums) - 2] // 400
@@ -51,50 +54,60 @@ def convert_annotation(image_id):
 
             #print("class {}, x_1 {}, x_2 {}, y_1 {}, y_2 {}".format(classes_dict[parts[0]],x_1,x_2,y_1,y_2))
 
-            box = [classes_dict[parts[0]], x_1, y_1, x_2, y_2 ]
+            box = [classes_dict[parts[0]], x_1, y_1, y_2 - y_1, x_2 - x_1]
 
     boxes.append(box)
 
     return boxes
 
+def generate_set(size, output_file):
 
 
-   #numpy.array()
-              
+	files = os.listdir("train/")
 
-            #out_file.write(str(parts[0]) + " " + " ".join([str(a) for a in bb]) + '\n')
+	files.sort()
 
-files = os.listdir("train/")
-
-text_files = []
-image_files = []
+	text_files = []
+	image_files = []
 
 
-
-for file in files:
-	if ".jpg" in file:
-		image_files.append(file)
-	else:
-		text_files.append(file)
-
-
-annotations = []
-
-print(len(image_files), len(text_files))
-for file in text_files:
-	annotations.append(convert_annotation(file))
-
-image_labels = numpy.array(annotations)
+	for i in range(0,int(size)):
+		if ".jpg" in files[i]:
+			image_files.append(files[i])
+			print(files[i])
+		else:
+			text_files.append(files[i])
+			print(files[i])
 
 
-images = []
+	annotations = []
 
-for image in image_files:
-	img = numpy.array(PIL.Image.open(os.path.join('train', image )).resize((400, 400)).convert('RGB'), dtype=numpy.uint8)
-	images.append(img)
+	print(len(image_files), len(text_files))
+	for file in text_files:
+		annotations.append(convert_annotation(file))
 
-images = numpy.array(images, dtype=numpy.uint8)
+	image_labels = numpy.array(annotations)
 
 
-print("Dataset contains {} images".format(images.shape[0]))
-numpy.savez("nc16_dataset", images=images, boxes=image_labels)
+	images = []
+
+	for image in image_files:
+		img = numpy.array(PIL.Image.open(os.path.join('train', image )).resize((400, 400)).convert('RGB'), dtype=numpy.uint8)
+		images.append(img)
+
+	images = numpy.array(images, dtype=numpy.uint8)
+
+
+	print("Dataset contains {} images".format(images.shape[0]))
+	numpy.savez(os.path.join('numpy_arrays', output_file ), images=images, boxes=image_labels)
+
+
+
+parser = argparse.ArgumentParser(description='Generate a training set')
+parser.add_argument('--size', metavar='-s', type=int, help='Pick an even number')
+parser.add_argument('--name', metavar='-n', help='File Name')
+args = parser.parse_args()
+
+generate_set(args.size, args.name)
+
+
