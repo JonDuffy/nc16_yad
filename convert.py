@@ -25,7 +25,7 @@ classes_dict = {"aeroplane":0, "bicycle":1, "bird":2, "boat":3, "bottle":4, "bus
 
 
 def convert_annotation(image_id):
-    boxes = []
+    cleaned_boxes = []
     
     file = open('train/{}'.format(image_id))
  
@@ -41,8 +41,18 @@ def convert_annotation(image_id):
   
             nums = [] 
             for item in strings:
-                if len(item) is not 1:
-                    nums.append(int(re.sub("[\s+]", "", item)))
+                #if len(item) is not 0:
+                s = re.sub("[\s+]", "", item)
+                s = re.sub(" ", "", item)
+                s = re.sub("  ", "", item)
+                s = re.sub("\n", "", item)
+                try: 
+
+                	nums.append(int(s.strip()))
+                except Exception as e:
+                	continue
+                	# print(e)
+                	# print("empty string {}".format(s))
 
 
             nums_paried = []
@@ -51,43 +61,37 @@ def convert_annotation(image_id):
             for i in range((len(nums) //2)):
             	nums_paried.append([nums[i * 2] , nums[i* 2 +1]])
 
-
-            print(nums_paried)
-
             y_1 = [1]
             x_1 = [1]
             y_2 = [1]
             x_2 = [1]
 
-            y_1.append(nums_paried[0][0] // 400)
-            x_1.append(nums_paried[0][0] % 400)
-            x_2.append(nums_paried[0][1] + x_1)
+
+            boxes = {}
 
             for pair in nums_paried:
-            	d = pair[0] - x_1
-            	if d is d % y_1:
-            		y_2[0] = pair[0] // 400
+           
+            	if pair[1] in boxes:
+            		boxes[pair[1]].append(pair)
             	else:
-            		p = pair[0] % 400
-
-            		y_1.append(pair[0]// 400)
-            		x_1.append(p)
-            		x_2.append(pair[1] + p)
+            		boxes[pair[1]] = []
+            		boxes[pair[1]].append(pair)
 
 
+            for key, value in boxes.items():
+                y_1 = value[0][0] // 400
+                y_2 = value[len(value) - 2][0] // 400
+                x_1 = value[0][0] % 400
+                x_2 = x_1 + value[0][1]
 
-    #         y_1 = nums[0] // 400
-    #         y_2 = nums[len(nums) - 2] // 400
-    #         x_1 = nums[0] % 400
-    #         x_2 = x_1 + nums[1]
+                #print("class {}, x_1 {}, x_2 {}, y_1 {}, y_2 {}".format(classes_dict[parts[0]],x_1,x_2,y_1,y_2))
+                box = [classes_dict[parts[0]], x_1, y_1, y_2 - y_1, x_2 - x_1]
+                box = numpy.array(box)
+                
+                cleaned_boxes.append(box)
 
-    #         #print("class {}, x_1 {}, x_2 {}, y_1 {}, y_2 {}".format(classes_dict[parts[0]],x_1,x_2,y_1,y_2))
-
-    #         box = [classes_dict[parts[0]], x_1, y_1, y_2 - y_1, x_2 - x_1]
-    #         print(box)
-    # boxes.append(box)
-
-    return boxes
+    
+    return numpy.array(cleaned_boxes)
 
 def generate_set(size, output_file):
 
@@ -131,13 +135,13 @@ def generate_set(size, output_file):
 
 
 
-# parser = argparse.ArgumentParser(description='Generate a training set')
-# parser.add_argument('--size', metavar='-s', type=int, help='Pick an even number')
-# parser.add_argument('--name', metavar='-n', help='File Name')
-# args = parser.parse_args()
+parser = argparse.ArgumentParser(description='Generate a training set')
+parser.add_argument('--size', metavar='-s', type=int, help='Pick an even number')
+parser.add_argument('--name', metavar='-n', help='File Name')
+args = parser.parse_args()
 
-# generate_set(args.size, args.name)
+generate_set(args.size, args.name)
 
 
 
-print(convert_annotation("2007_000032.txt"))
+# print(convert_annotation("2007_006661.txt"))
