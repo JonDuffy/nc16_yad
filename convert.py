@@ -38,25 +38,54 @@ def convert_annotation(image_id):
         if parts[2] not in "1 0\n": 
      
             strings = parts[2].split(" ")
-    
+  
             nums = [] 
             for item in strings:
                 if len(item) is not 1:
                     nums.append(int(re.sub("[\s+]", "", item)))
 
-            '''X_1 top left 
-            '''
 
-            y_1 = nums[0] // 400
-            y_2 = nums[len(nums) - 2] // 400
-            x_1 = nums[0] % 400
-            x_2 = x_1 + nums[1]
+            nums_paried = []
 
-            #print("class {}, x_1 {}, x_2 {}, y_1 {}, y_2 {}".format(classes_dict[parts[0]],x_1,x_2,y_1,y_2))
 
-            box = [classes_dict[parts[0]], x_1, y_1, y_2 - y_1, x_2 - x_1]
+            for i in range((len(nums) //2)):
+            	nums_paried.append([nums[i * 2] , nums[i* 2 +1]])
 
-    boxes.append(box)
+
+            print(nums_paried)
+
+            y_1 = [1]
+            x_1 = [1]
+            y_2 = [1]
+            x_2 = [1]
+
+            y_1.append(nums_paried[0][0] // 400)
+            x_1.append(nums_paried[0][0] % 400)
+            x_2.append(nums_paried[0][1] + x_1)
+
+            for pair in nums_paried:
+            	d = pair[0] - x_1
+            	if d is d % y_1:
+            		y_2[0] = pair[0] // 400
+            	else:
+            		p = pair[0] % 400
+
+            		y_1.append(pair[0]// 400)
+            		x_1.append(p)
+            		x_2.append(pair[1] + p)
+
+
+
+    #         y_1 = nums[0] // 400
+    #         y_2 = nums[len(nums) - 2] // 400
+    #         x_1 = nums[0] % 400
+    #         x_2 = x_1 + nums[1]
+
+    #         #print("class {}, x_1 {}, x_2 {}, y_1 {}, y_2 {}".format(classes_dict[parts[0]],x_1,x_2,y_1,y_2))
+
+    #         box = [classes_dict[parts[0]], x_1, y_1, y_2 - y_1, x_2 - x_1]
+    #         print(box)
+    # boxes.append(box)
 
     return boxes
 
@@ -74,10 +103,9 @@ def generate_set(size, output_file):
 	for i in range(0,int(size)):
 		if ".jpg" in files[i]:
 			image_files.append(files[i])
-			print(files[i])
 		else:
 			text_files.append(files[i])
-			print(files[i])
+
 
 
 	annotations = []
@@ -92,7 +120,7 @@ def generate_set(size, output_file):
 	images = []
 
 	for image in image_files:
-		img = numpy.array(PIL.Image.open(os.path.join('train', image )).resize((400, 400)).convert('RGB'), dtype=numpy.uint8)
+		img = numpy.array(PIL.Image.open(os.path.join('train', image )).resize((640, 480)).convert('RGB'), dtype=numpy.uint8)
 		images.append(img)
 
 	images = numpy.array(images, dtype=numpy.uint8)
@@ -103,11 +131,13 @@ def generate_set(size, output_file):
 
 
 
-parser = argparse.ArgumentParser(description='Generate a training set')
-parser.add_argument('--size', metavar='-s', type=int, help='Pick an even number')
-parser.add_argument('--name', metavar='-n', help='File Name')
-args = parser.parse_args()
+# parser = argparse.ArgumentParser(description='Generate a training set')
+# parser.add_argument('--size', metavar='-s', type=int, help='Pick an even number')
+# parser.add_argument('--name', metavar='-n', help='File Name')
+# args = parser.parse_args()
 
-generate_set(args.size, args.name)
+# generate_set(args.size, args.name)
 
 
+
+print(convert_annotation("2007_000032.txt"))
